@@ -139,6 +139,23 @@ platforms:
         - ARDUINO_AVR_MEGA2560
       warnings:
       flags:
+  mduino42:
+    board: arduino:avr:mega:cpu=atmega2560
+    package: arduino:avr
+    gcc:
+      features:
+      defines:
+        - __AVR_ATmega2560__
+        - ARDUINO_AVR_MEGA2560
+        - ARDUINO_ARCH_AVR
+        - ARDUINO_CI
+        - MDUINO_42_PLUS
+        - MDUINO_PLUS
+        - EEPROM_SIZE=2048
+        - NUM_SERIAL_PORTS=2
+      warnings:
+      flags:
+        - -fpermissive
   cplayClassic:
     board: arduino:avr:circuitplay32u4cat
     package: arduino:avr
