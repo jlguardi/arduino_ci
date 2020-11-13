@@ -68,6 +68,12 @@ class SoftwareSerial : public Stream
       mState->digitalPin[mPinOut].outgoingFromAscii(String((char)byte), bigEndian);
       return 1;
     }
+    virtual size_t write(const uint8_t* byte, int len) {
+      for(int i=0; i<len; i++){
+          mState->digitalPin[mPinOut].outgoingFromAscii(String((char)byte[i]), bigEndian);
+      }
+      return 1;
+    }
 
     virtual int available() { return mState->digitalPin[mPinIn].incomingToAscii(mOffset, bigEndian).length();  }
     virtual void flush() {}
