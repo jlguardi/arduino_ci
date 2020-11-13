@@ -98,8 +98,16 @@ class PinHistory : public ObservableDataStream {
     // the actual "set" operation doesn't happen until the next read
     T operator=(const T& i) {
       qIn.clear();
+      T prev = qOut.backData();
       qOut.push(i);
       advertiseBit(qOut.backData()); // not valid for all possible types but whatever
+#ifdef ISR_HANDLER
+      if (prev != i){ // just raise interruption if status changed
+	  uint8_t mode = prev > i ? FALLING : RISING;
+	  // std::cerr << "Event: " << prev << " -> " << i << " -> " << (int)mode << std::endl;
+	  ISR_HANDLER(i, mode);
+      }
+#endif
       return qOut.backData();
     }
 

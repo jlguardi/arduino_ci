@@ -41,9 +41,9 @@ typedef uint8_t byte;
 
 // might as well use that NO-op macro for these, while unit testing
 // you need interrupts? interrupt yourself
+#ifndef yield
 #define yield() _NOP()
-#define interrupts() _NOP()
-#define noInterrupts() _NOP()
+#endif
 
 // TODO: correctly establish this per-board!
 #define F_CPU 1000000UL
@@ -61,8 +61,8 @@ typedef unsigned int word;
 // Get the bit location within the hardware port of the given virtual pin.
 // This comes from the pins_*.c file for the active board configuration.
 
-#define analogInPinToBit(P) (P)
-#define digitalPinToInterrupt(P) (P)
+//#define analogInPinToBit(P) (P)
+//#define digitalPinToInterrupt(P) (P)
 
 // uint16_t makeWord(uint16_t w);
 // uint16_t makeWord(byte h, byte l);

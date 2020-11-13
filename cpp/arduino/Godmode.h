@@ -4,6 +4,9 @@
 #include <avr/io.h>
 #endif
 #include "WString.h"
+
+static void isr_handler(uint8_t value, uint8_t mode);
+#define ISR_HANDLER isr_handler
 #include "PinHistory.h"
 
 // random
@@ -35,15 +38,31 @@ unsigned long micros();
 #endif
 
 // different EEPROM implementations have different macros that leak out
-#if !defined(EEPROM_SIZE) && defined(E2END) && (E2END)
+#if !defined(EEPROM_SIZE)
+#if defined(E2END) && (E2END)
   // public value indicates that feature is available
   #define EEPROM_SIZE (E2END + 1)
-  // local array size
-  #define _EEPROM_SIZE EEPROM_SIZE
 #else
   // feature is not available but we want to have the array so other code compiles
-  #define _EEPROM_SIZE (0)
+  #define EEPROM_SIZE (0)
 #endif
+#endif
+
+static int isr_pin = 0;
+void gm_isr_handler(uint8_t interrupt, uint8_t mode);
+uint8_t digitalpintointerrupt(uint8_t pin);
+static void isr_handler(uint8_t value, uint8_t mode){
+    // std::cerr << "Int: " << isr_pin << " -> " << (int)digitalpintointerrupt(isr_pin) << std::endl;
+    gm_isr_handler(digitalpintointerrupt(isr_pin), mode);
+}
+
+template <typename T>
+class PinMap{
+    PinHistory<T> pins[MOCK_PINS_COUNT];
+  public:
+    PinHistory<T> operator [] (int i) const {isr_pin=i; return pins[i];}
+    PinHistory<T>& operator [] (int i) {isr_pin=i; return pins[i];}
+};
 
 class GodmodeState {
   private:
@@ -55,7 +74,8 @@ class GodmodeState {
 
     struct InterruptDef {
       bool attached;
-      uint8_t mode;
+      uint8_t mode; //< One of CHANGE, FALLING or RISING
+      void (*isr)(void);
     };
 
     uint8_t mmapPorts[MOCK_PINS_COUNT];
@@ -66,12 +86,13 @@ class GodmodeState {
     unsigned long micros;
     unsigned long seed;
     // not going to put pinmode here unless its really needed. can't think of why it would be
-    PinHistory<bool> digitalPin[MOCK_PINS_COUNT];
-    PinHistory<int> analogPin[MOCK_PINS_COUNT];
+    PinMap<bool> digitalPin;
+    PinMap<int> analogPin;
     struct PortDef serialPort[NUM_SERIAL_PORTS];
     struct InterruptDef interrupt[MOCK_PINS_COUNT]; // not sure how to get actual number
+    bool interruptsEnabled; // global flag to enable/disable interrupts
     struct PortDef spi;
-    uint8_t eeprom[_EEPROM_SIZE];
+    uint8_t eeprom[EEPROM_SIZE];
 
     void resetPins() {
       for (int i = 0; i < MOCK_PINS_COUNT; ++i) {
@@ -85,6 +106,7 @@ class GodmodeState {
     }
 
     void resetInterrupts() {
+      interruptsEnabled = true;
       for (int i = 0; i < MOCK_PINS_COUNT; ++i) {
         interrupt[i].attached = false;
       }
@@ -171,6 +193,8 @@ void analogWrite(uint8_t, int);
 #define analogWriteResolution(...) _NOP()
 void attachInterrupt(uint8_t interrupt, void ISR(void), uint8_t mode);
 void detachInterrupt(uint8_t interrupt);
+void noInterrupts();
+void interrupts();
 
 // TODO: issue #26 to track the commanded state here
 inline void tone(uint8_t _pin, unsigned int frequency, unsigned long duration = 0) {}

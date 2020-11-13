@@ -79,13 +79,40 @@ int analogRead(unsigned char pin) {
 
 void attachInterrupt(uint8_t interrupt, void ISR(void), uint8_t mode) {
   GodmodeState* godmode = GODMODE();
+  // std::cerr << "Attached interruption " << (int)interrupt << " with mode " << (int)mode << std::endl;
   godmode->interrupt[interrupt].attached = true;
   godmode->interrupt[interrupt].mode = mode;
+  godmode->interrupt[interrupt].isr = ISR;
 }
 
 void detachInterrupt(uint8_t interrupt) {
   GodmodeState* godmode = GODMODE();
   godmode->interrupt[interrupt].attached = false;
+}
+
+void interrupts(){
+  GodmodeState* godmode = GODMODE();
+  godmode->interruptsEnabled = true; 
+  // std::cerr << "Interrupts enabled" << std::endl;
+}
+
+void noInterrupts(){
+  GodmodeState* godmode = GODMODE();
+  godmode->interruptsEnabled = false; 
+  // std::cerr << "Interrupts disabled" << std::endl;
+}
+
+void gm_isr_handler(uint8_t interrupt, uint8_t mode){
+  GodmodeState* godmode = GODMODE();
+  if (!godmode->interruptsEnabled){
+        // std::cerr << "Ignored interrupt " << (int)interrupt << " with mode " << (int)mode << std::endl;
+	return;
+  }
+  // std::cerr << "Interruption " << (int)interrupt << " with mode " << (int)mode << std::endl;
+  if (!godmode->interrupt[interrupt].attached || !godmode->interrupt[interrupt].isr) return;
+  if (godmode->interrupt[interrupt].mode == CHANGE || godmode->interrupt[interrupt].mode == mode){
+    godmode->interrupt[interrupt].isr();
+  }
 }
 
 // Serial ports
