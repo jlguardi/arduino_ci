@@ -17,6 +17,7 @@ class Parser
     output_options = {
       skip_unittests: false,
       skip_compilation: false,
+      output_path: nil,
       ci_config: {
         "unittest" => unit_config
       },
@@ -36,6 +37,10 @@ class Parser
 
       opts.on("--skip-examples-compilation", "Don't compile example sketches") do |p|
         output_options[:skip_compilation] = p
+      end
+
+      opts.on("--examples-output-path=PATH", "PATH where examples compilated files are stored") do |p|
+        output_options[:output_path] = p
       end
 
       opts.on("--testfile-select=GLOB", "Unit test file (or glob) to select") do |p|
@@ -373,8 +378,12 @@ def perform_compilation_tests(config)
     assure("Switching to board for #{platform} (#{board})") { @arduino_cmd.use_board(board) } unless last_board == board
     last_board = board
 
+
     example_paths.each do |example_path|
       example_name = File.basename(example_path)
+      if @cli_options[:output_path]
+        attempt("Setting compiler output dir")  { @arduino_cmd.set_pref("build.path", File.join(@cli_options[:output_path],File.basename(example_name,File.extname(example_name)))) }
+      end
       attempt("Verifying #{example_name}") do
         ret = @arduino_cmd.verify_sketch(example_path)
         unless ret
