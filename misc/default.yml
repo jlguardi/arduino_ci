@@ -13,6 +13,8 @@ packages:
     url: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
   esp32:esp32:
     url: https://dl.espressif.com/dl/package_esp32_index.json
+  industrialshields:avr:
+    url: http://apps.industrialshields.com/main/arduino/boards/package_industrialshields_index.json 
 
 platforms:
 
@@ -140,8 +142,8 @@ platforms:
       warnings:
       flags:
   mduino42:
-    board: arduino:avr:mega:cpu=atmega2560
-    package: arduino:avr
+    board: industrialshields:avr:mduino:cpu=mduino42plus
+    package: industrialshields:avr
     gcc:
       features:
       defines:
